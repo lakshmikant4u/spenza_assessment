@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { WebhookModule } from './webhook/webhook.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { WebhookModule } from './webhook/webhook.module';
       inject: [ConfigService],
     }),
     WebhookModule,
+    UsersModule,
   ],
 })
 export class AppModule {}
