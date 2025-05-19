@@ -1,21 +1,51 @@
 // src/webhook/webhook.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { WebhookEvent, WebhookEventDocument } from './webhook.schema';
+import {
+  WebhookEvent,
+  WebhookEventDocument,
+  WebhookSubscription,
+  WebhookSubscriptionDocument,
+} from './webhook.schema';
 import { Model } from 'mongoose';
 
 @Injectable()
 export class WebhookService {
   constructor(
     @InjectModel(WebhookEvent.name)
-    private webhookModel: Model<WebhookEventDocument>,
+    private webhookEventModel: Model<WebhookEventDocument>,
+    @InjectModel(WebhookSubscription.name)
+    private webhookSubscriptionModel: Model<WebhookSubscriptionDocument>,
   ) {}
 
-  async saveEvent(payload: any): Promise<WebhookEvent> {
-    const newEvent = new this.webhookModel({
-      eventType: payload.eventType,
-      data: payload.data,
+  // ✅ Save verified event to DB
+  async handleEvent(eventType: string, data: any) {
+    const event = new this.webhookEventModel({ eventType, data });
+    return event.save();
+  }
+
+  // ✅ Subscribe to webhook
+  async subscribe(sourceUrl: string, callbackUrl: string) {
+    const existing = await this.webhookSubscriptionModel.findOne({
+      sourceUrl,
+      callbackUrl,
     });
-    return newEvent.save();
+
+    if (existing) return existing;
+
+    const sub = new this.webhookSubscriptionModel({ sourceUrl, callbackUrl });
+    return sub.save();
+  }
+
+  // ✅ List subscriptions
+  async getSubscriptions() {
+    return this.webhookSubscriptionModel.find().exec();
+  }
+
+  // ✅ Delete a subscription
+  async unsubscribe(id: string) {
+    const result = await this.webhookSubscriptionModel.findByIdAndDelete(id);
+    if (!result) throw new NotFoundException('Subscription not found');
+    return { message: 'Unsubscribed successfully' };
   }
 }
