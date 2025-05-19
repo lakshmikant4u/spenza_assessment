@@ -20,7 +20,6 @@ export class WebhookController {
     private readonly configService: ConfigService,
   ) {}
 
-  // ✅ Securely handle incoming webhook events
   @Post('events')
   async handleWebhookEvent(
     @Body() body: { eventType: string; data: any },
